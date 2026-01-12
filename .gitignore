@@ -58,4 +58,17 @@ docs/_build/
 target/
 .idea
 venv
-*.cpp
+
+# NOTE: Do not ignore generated Cython C/C++ sources if you ship them in sdists.
+# This project includes `mdlp/_mdlp.cpp` so installations can succeed without Cython.
+# (Ignore build artifacts instead.)
+
+# Cython-generated sources (keep tracked)
+# *.c
+# *.cpp
+
+# C/C++ build artifacts
+*.o
+*.obj
+*.pyd
+*.dylib

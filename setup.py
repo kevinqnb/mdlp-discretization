@@ -15,7 +15,7 @@ if __name__ == '__main__':
         from Cython.Distutils import build_ext
         print("Using cython to build the extension")
         sources = ['mdlp/_mdlp.pyx']
-    except:
+    except ImportError:
         # else we build from the cpp file included in the distribution
         print("Cannot find available cython installation. Using cpp to build the extension")
         from setuptools.command.build_ext import build_ext
@@ -24,23 +24,27 @@ if __name__ == '__main__':
     class CustomBuildExt(build_ext):
         """Custom build_ext class to defer numpy imports until needed.
 
-        Overrides the run command for building an extension and adds in numpy
-        include dirs to the extension build. Doing this at extension build time
-        allows us to avoid requiring that numpy be pre-installed before
-        executing this setup script.
+        Overrides the build process for an extension and adds numpy include dirs
+        to each extension build.
         """
 
-        def run(self):
+        def build_extensions(self):
             import numpy
-            self.include_dirs.append(numpy.get_include())
-            build_ext.run(self)
+
+            numpy_include = numpy.get_include()
+            for ext in self.extensions:
+                ext.include_dirs = list(ext.include_dirs or [])
+                if numpy_include not in ext.include_dirs:
+                    ext.include_dirs.append(numpy_include)
+
+            super().build_extensions()
 
     cpp_ext = Extension(
         'mdlp._mdlp',
         sources=sources,
-        libraries=[],
-        include_dirs=[],
         language='c++',
+        include_dirs=[],
+        libraries=[],
     )
 
     setup(
@@ -48,18 +52,20 @@ if __name__ == '__main__':
         version='0.3.3',
         description=__doc__,
         license='BSD 3 Clause',
-        url='github.com/hlin117/mdlp-discretization',
+        url='https://github.com/kevinqnb/mdlp-discretization.git',
         author='Henry Lin',
         author_email='hlin117@gmail.com',
+        # NumPy is required at build time to compile the extension (for headers)
+        # and at runtime.
+        setup_requires=[
+            'numpy>=1.11.2',
+        ],
         install_requires=[
             'numpy>=1.11.2',
             'scipy>=0.18.1',
             'scikit-learn>=0.18.1',
         ],
-        setup_requires=[
-            'numpy>=1.11.2',
-        ],
-        packages=['mdlp'],
+        packages=find_packages(exclude=('tests', 'build')),
         ext_modules=[cpp_ext],
         cmdclass={'build_ext': CustomBuildExt},
     )
