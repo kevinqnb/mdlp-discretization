@@ -178,7 +178,7 @@ class MDLP(BaseEstimator, TransformerMixin):
         `k` is the number of bins the discretizer creates from a continuous
         feature.
         """
-        X = check_array(X, force_all_finite=True, ensure_2d=False)
+        X = check_array(X, ensure_all_finite=True, ensure_2d=False)
         check_is_fitted(self, "cut_points_")
 
         output = X.copy()
